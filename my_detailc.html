@@ -16,7 +16,8 @@
     
     <div id="content" class="card bg-white p-8 rounded-2xl shadow-2xl w-full hidden border-t-4 border-indigo-500">
         <div class="text-center mb-6">
-            <img id="profileImage" class="w-24 h-24 rounded-full mx-auto shadow-md mb-3" alt="Profile Image" src="https://placehold.co/100x100/ccc/000?text=No+Img">
+            <!-- Image source is initially a placeholder -->
+            <img id="profileImage" class="w-24 h-24 rounded-full mx-auto shadow-md mb-3 object-cover" alt="Profile Image" src="https://placehold.co/100x100/ccc/000?text=No+Img">
             <h1 id="displayName" class="text-3xl font-extrabold text-gray-900">Dynamic Profile</h1>
             <p id="displayMessage" class="text-indigo-600 font-medium"></p>
         </div>
@@ -50,47 +51,51 @@
             const regex = /([^&=]+)=([^&]*)/g;
             let m;
             while (m = regex.exec(queryString)) {
-                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+                // IMPORTANT: Use decodeURIComponent twice to handle nested URL encoding (common with Base64)
+                params[decodeURIComponent(m[1])] = decodeURIComponent(decodeURIComponent(m[2]));
             }
             return params;
         }
 
         window.onload = function() {
             const params = getQueryParams();
+            
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('content').classList.remove('hidden');
 
-            const name = params['name'] || 'User Profile';
-            const message = params['msg'] || 'No message provided.';
+            const name = params['name'];
+            const message = params['msg'];
             const link = params['url'];
-            const imageUrl = params['img'];
+            const imageB64 = params['img_b64']; // New parameter for Base64 image data
 
             // 1. Set Name and Message
-            document.getElementById('displayName').innerText = name;
-            document.getElementById('displayMessage').innerText = message;
+            document.getElementById('displayName').innerText = name || 'User Profile';
+            document.getElementById('displayMessage').innerText = message || 'No message provided.';
 
-            // 2. Set Image
+            // 2. Set Image (Handle Base64 data)
             const imgElement = document.getElementById('profileImage');
-            if (imageUrl) {
-                imgElement.src = imageUrl;
+            if (imageB64) {
+                // The Base64 string is directly assigned as the image source
+                imgElement.src = imageB64;
             } else {
                 imgElement.src = "https://placehold.co/100x100/ccc/000?text=No+Img";
             }
             
             // 3. Set Name container visibility
-            if (params['name']) {
-                document.getElementById('nameValue').innerText = params['name'];
+            if (name) {
+                document.getElementById('nameValue').innerText = name;
                 document.getElementById('nameContainer').classList.remove('hidden');
             }
 
             // 4. Set Link and Action Button
+            const actionLink = document.getElementById('actionLink');
             if (link) {
                 document.getElementById('linkValue').innerText = link.length > 40 ? link.substring(0, 37) + '...' : link;
                 document.getElementById('linkValue').href = link;
                 document.getElementById('linkContainer').classList.remove('hidden');
-                document.getElementById('actionLink').href = link;
+                actionLink.href = link;
             } else {
-                document.getElementById('actionLink').classList.add('hidden');
+                actionLink.classList.add('hidden');
             }
         };
     </script>

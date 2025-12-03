@@ -105,12 +105,15 @@
 
         <!-- Icon/Profile -->
         <div class="text-center mb-6">
-            <div id="iconContainer"
-                 class="w-28 h-28 rounded-full mx-auto flex items-center justify-center text-white text-4xl glow-icon shadow-2xl transition duration-500 bg-indigo-500">
-                <i id="socialIcon" class="fa-solid fa-qrcode"></i>
-            </div>
+            <!-- FIX 2: Wrap Icon and Image in a single clickable container -->
+            <a id="iconLink" href="#" class="block mx-auto">
+                <div id="iconContainer"
+                     class="w-28 h-28 rounded-full mx-auto flex items-center justify-center text-white text-4xl glow-icon shadow-2xl transition duration-500 bg-indigo-500">
+                    <i id="socialIcon" class="fa-solid fa-qrcode"></i>
+                </div>
 
-            <img id="profileImage" class="w-28 h-28 rounded-full mx-auto object-cover hidden shadow-xl mt-4">
+                <img id="profileImage" class="w-28 h-28 rounded-full mx-auto object-cover hidden shadow-xl mt-4">
+            </a>
 
             <h1 id="displayName" class="text-3xl font-extrabold text-white mt-4 drop-shadow-lg">Dynamic Profile</h1>
             <p id="displayMessage" class="text-white/80 font-medium"></p>
@@ -136,6 +139,7 @@
         </div>
 
         <!-- Action Button (Dynamically assigned function) -->
+        <!-- FIX 1: Using an <a> tag directly ensures navigation works via href -->
         <a id="actionButton" href="#" role="button"
            class="mt-8 block w-full text-center py-3 rounded-xl text-white font-semibold shadow-lg transition duration-300 bg-indigo-600 hover:bg-indigo-500">
             Go to Profile
@@ -190,6 +194,7 @@
         function applyDynamicStyles(link, copyData) {
             const iconContainer = document.getElementById("iconContainer");
             const actionButton = document.getElementById("actionButton");
+            const iconLink = document.getElementById("iconLink"); // FIX 2: Get the new wrapper link
             const socialIcon = document.getElementById("socialIcon");
             const copyFeedback = document.getElementById("copyFeedback");
             
@@ -206,6 +211,7 @@
                 let matchString = copyData ? '?copydata=' : link; 
                 
                 for (const platform of PLATFORM_MAP) {
+                    // FIX: Simplified link matching
                     if (matchString.startsWith(platform.prefix) || link?.includes(platform.prefix)) {
                         apply = platform;
                         break;
@@ -213,30 +219,47 @@
                 }
             }
 
-            // 2. Clear old click listeners
-            actionButton.onclick = null;
+            // 2. Clear old click handlers
+            actionButton.onclick = null; 
             
             // 3. Apply action-specific logic
             actionButton.innerText = apply.name;
             
             if (apply.action === 'copy' && copyData) {
-                // Attach copy function
-                actionButton.setAttribute('href', '#'); // Prevent navigation for copy
+                // Copy Action
+                actionButton.setAttribute('href', '#'); 
+                actionButton.removeAttribute('target');
+                // FIX 1: Attach copy function to onclick handler
                 actionButton.onclick = () => copyDataToClipboard(copyData, actionButton, copyFeedback);
+                
+                // FIX 2: Icon/Image should not be clickable during copy action
+                iconLink.setAttribute('href', '#');
+                iconLink.removeAttribute('target');
+                iconLink.onclick = (e) => { e.preventDefault(); actionButton.click(); }; // Click main button
+                
             } else if (link) {
-                // Attach link attributes
+                // Link Action
                 actionButton.setAttribute('href', link);
-                // Only open new tab for HTTP links
+                actionButton.onclick = null; // Ensure no stale copy function runs
+                
+                // Set target attribute for action button
                 if (!link.startsWith('tel:') && !link.startsWith('sms:') && !link.startsWith('mailto:')) {
                     actionButton.setAttribute('target', '_blank');
                 } else {
                     actionButton.removeAttribute('target');
                 }
+
+                // FIX 2: Make Icon/Image also navigate to the link
+                iconLink.setAttribute('href', link);
+                iconLink.setAttribute('target', actionButton.getAttribute('target') || '_blank');
+
             } else {
-                // If no link or copy data, ensure the button is neutralized
+                // No Action Defined
                 actionButton.setAttribute('href', '#');
                 actionButton.removeAttribute('target');
                 actionButton.innerText = 'No Action Defined';
+                iconLink.setAttribute('href', '#');
+                iconLink.removeAttribute('target');
             }
             
             // 4. Apply styling

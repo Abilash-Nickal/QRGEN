@@ -16,7 +16,7 @@
     
     <div id="content" class="card bg-white p-8 rounded-2xl shadow-2xl w-full hidden border-t-4 border-indigo-500">
         <div class="text-center mb-6">
-            <!-- Image source is initially a placeholder -->
+            <!-- Image source is a placeholder; it will be updated by a URL -->
             <img id="profileImage" class="w-24 h-24 rounded-full mx-auto shadow-md mb-3 object-cover" alt="Profile Image" src="https://placehold.co/100x100/ccc/000?text=No+Img">
             <h1 id="displayName" class="text-3xl font-extrabold text-gray-900">Dynamic Profile</h1>
             <p id="displayMessage" class="text-indigo-600 font-medium"></p>
@@ -51,8 +51,8 @@
             const regex = /([^&=]+)=([^&]*)/g;
             let m;
             while (m = regex.exec(queryString)) {
-                // IMPORTANT: Use decodeURIComponent twice to handle nested URL encoding (common with Base64)
-                params[decodeURIComponent(m[1])] = decodeURIComponent(decodeURIComponent(m[2]));
+                // Decode components
+                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
             }
             return params;
         }
@@ -66,17 +66,16 @@
             const name = params['name'];
             const message = params['msg'];
             const link = params['url'];
-            const imageB64 = params['img_b64']; // New parameter for Base64 image data
+            const imageUrl = params['img']; // Reading the standard Image URL
 
             // 1. Set Name and Message
             document.getElementById('displayName').innerText = name || 'User Profile';
             document.getElementById('displayMessage').innerText = message || 'No message provided.';
 
-            // 2. Set Image (Handle Base64 data)
+            // 2. Set Image (Using External URL)
             const imgElement = document.getElementById('profileImage');
-            if (imageB64) {
-                // The Base64 string is directly assigned as the image source
-                imgElement.src = imageB64;
+            if (imageUrl) {
+                imgElement.src = imageUrl;
             } else {
                 imgElement.src = "https://placehold.co/100x100/ccc/000?text=No+Img";
             }

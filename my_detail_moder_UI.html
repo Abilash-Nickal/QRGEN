@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic QR Code Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for social media icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: #333;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .card {
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .data-item { display: flex; justify-content: space-between; align-items: center; }
+
+        /* Glossy effect for cards inside */
+        .glossy-item {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Custom colors for dynamic branding */
+        .bg-facebook { background-color: #1877f2; }
+        .bg-instagram { background-image: linear-gradient(to right bottom, #405DE6, #5B51D8, #833AB4, #C135A2, #E1306C, #FD1D1D, #F56040, #F77737, #FCAF45); }
+        .bg-youtube { background-color: #ff0000; }
+        .bg-linkedin { background-color: #0a66c2; }
+        .bg-whatsapp { background-color: #25d366; }
+        .bg-generic { background-color: #6366f1; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div id="loading" class="text-xl font-semibold text-gray-500">Scanning data...</div>
+    
+    <!-- Dynamic Card Container -->
+    <div id="content" class="card bg-white p-8 rounded-2xl shadow-2xl w-full hidden border-t-4 border-gray-300">
+        <div class="text-center mb-6">
+            
+            <!-- Dynamic Icon/Image Placeholder -->
+            <div id="iconContainer" class="w-24 h-24 rounded-full mx-auto shadow-xl mb-3 flex items-center justify-center text-white text-3xl">
+                <!-- Fallback Icon -->
+                <i id="socialIcon" class="fas fa-qrcode"></i>
+            </div>
+            
+            <img id="profileImage" class="w-24 h-24 rounded-full mx-auto shadow-md mb-3 object-cover hidden" alt="Profile Image" src="">
+            
+            <h1 id="displayName" class="text-3xl font-extrabold text-white mt-4">Dynamic Profile</h1>
+            <p id="displayMessage" class="text-white font-medium"></p>
+        </div>
+        
+        <div class="space-y-4 pt-4 border-t border-white border-opacity-30">
+            <div id="nameContainer" class="data-item p-3 glossy-item rounded-lg hidden">
+                <span class="font-semibold text-white">Name:</span>
+                <span id="nameValue" class="text-white"></span>
+            </div>
+
+            <div id="linkContainer" class="data-item p-3 glossy-item rounded-lg hidden">
+                <span class="font-semibold text-white">Link:</span>
+                <a id="linkValue" href="#" target="_blank" class="text-white hover:underline break-all"></a>
+            </div>
+        </div>
+        
+        <!-- Action Button -->
+        <a id="actionLink" href="#" target="_blank" 
+           class="mt-8 w-full block text-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white transition duration-150 ease-in-out">
+            Go to Profile
+        </a>
+
+        <p class="mt-8 text-xs text-white text-opacity-70 text-center">
+            The profile icon and link were determined from the QR code data.
+        </p>
+    </div>
+
+    <script>
+        // Mapping social media prefixes to Font Awesome classes and Tailwind custom colors
+        const PLATFORM_MAP = [
+            { prefix: 'facebook.com', icon: 'fab fa-facebook-f', color: 'bg-facebook', name: 'Facebook' },
+            { prefix: 'instagram.com', icon: 'fab fa-instagram', color: 'bg-instagram', name: 'Instagram' },
+            { prefix: 'youtube.com', icon: 'fab fa-youtube', color: 'bg-youtube', name: 'YouTube' },
+            { prefix: 'linkedin.com/in', icon: 'fab fa-linkedin-in', color: 'bg-linkedin', name: 'LinkedIn' },
+            { prefix: 'wa.me', icon: 'fab fa-whatsapp', color: 'bg-whatsapp', name: 'WhatsApp' },
+        ];
+
+        function getQueryParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const regex = /([^&=]+)=([^&]*)/g;
+            let m;
+            while (m = regex.exec(queryString)) {
+                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+            }
+            return params;
+        }
+
+        function applyDynamicStyles(link) {
+            const iconContainer = document.getElementById('iconContainer');
+            const actionLink = document.getElementById('actionLink');
+            const socialIcon = document.getElementById('socialIcon');
+            const card = document.getElementById('content');
+            
+            // Default styling
+            let platformMatch = { icon: 'fas fa-link', color: 'bg-generic', name: 'Website' };
+            
+            // 1. Check for platform match
+            if (link) {
+                for (const platform of PLATFORM_MAP) {
+                    if (link.includes(platform.prefix)) {
+                        platformMatch = platform;
+                        break;
+                    }
+                }
+            }
+
+            // 2. Apply styling based on platform
+            iconContainer.className = 'w-24 h-24 rounded-full mx-auto shadow-xl mb-3 flex items-center justify-center text-white text-3xl transition duration-500 ' + platformMatch.color;
+            socialIcon.className = platformMatch.icon;
+            
+            // 3. Update button text and color
+            actionLink.className = actionLink.className.replace(/bg-.*?-600/, platformMatch.color);
+            actionLink.innerText = `Go to ${platformMatch.name}`;
+            
+            // 4. Update card border color (using the color, not the full background class)
+            let borderColorClass = platformMatch.color.replace('bg-', 'border-');
+            if (borderColorClass.includes('instagram')) {
+                // Special handling for gradients if necessary, fallback to indigo 
+                card.className = card.className.replace(/border-t-4 border-.*?-500/, 'border-t-4 border-indigo-500');
+            } else {
+                card.className = card.className.replace(/border-t-4 border-.*?-500/, 'border-t-4 ' + borderColorClass.replace('bg-', 'border-'));
+            }
+        }
+
+        window.onload = function() {
+            const params = getQueryParams();
+            
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            const name = params['name'];
+            const message = params['msg'];
+            const link = params['url'];
+            const imageUrl = params['img'];
+
+            // 1. Set Name and Message
+            document.getElementById('displayName').innerText = name || 'User Profile';
+            document.getElementById('displayMessage').innerText = message || 'Click the link below.';
+
+            // 2. Set Image (If a direct image URL is provided, override the icon)
+            const imgElement = document.getElementById('profileImage');
+            const iconContainer = document.getElementById('iconContainer');
+
+            if (imageUrl) {
+                imgElement.src = imageUrl;
+                imgElement.classList.remove('hidden');
+                iconContainer.classList.add('hidden');
+            } else {
+                imgElement.classList.add('hidden');
+                iconContainer.classList.remove('hidden');
+            }
+            
+            // 3. Apply styles based on the link
+            applyDynamicStyles(link);
+            
+            // 4. Set Name container visibility
+            if (name) {
+                document.getElementById('nameValue').innerText = name;
+                document.getElementById('nameContainer').classList.remove('hidden');
+            }
+
+            // 5. Set Link visibility and action button
+            const actionLink = document.getElementById('actionLink');
+            if (link) {
+                document.getElementById('linkValue').innerText = link.length > 50 ? link.substring(0, 47) + '...' : link;
+                document.getElementById('linkValue').href = link;
+                document.getElementById('linkContainer').classList.remove('hidden');
+                actionLink.href = link;
+            } else {
+                actionLink.classList.add('hidden');
+            }
+        };
+    </script>
+</body>
+</html>

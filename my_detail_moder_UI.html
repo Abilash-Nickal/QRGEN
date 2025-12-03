@@ -136,10 +136,10 @@
         </div>
 
         <!-- Action Button (Dynamically assigned function) -->
-        <button id="actionButton"
+        <a id="actionButton" href="#" role="button"
            class="mt-8 block w-full text-center py-3 rounded-xl text-white font-semibold shadow-lg transition duration-300 bg-indigo-600 hover:bg-indigo-500">
             Go to Profile
-        </button>
+        </a>
         
         <p id="copyFeedback" class="text-sm text-center text-yellow-300 mt-3 hidden"></p>
 
@@ -171,12 +171,13 @@
 
         // --- NEW COPY FUNCTION ---
         function copyDataToClipboard(data, button, feedbackElement) {
+            // Using navigator.clipboard.writeText is the modern way to copy.
             navigator.clipboard.writeText(data).then(() => {
                 button.innerText = "Copied!";
                 feedbackElement.innerText = "Data copied successfully.";
                 feedbackElement.classList.remove('hidden');
                 setTimeout(() => {
-                    button.innerText = "Copy Data";
+                    button.innerText = "Copy Data"; // Restore button text
                     feedbackElement.classList.add('hidden');
                 }, 2000);
             }).catch(err => {
@@ -202,7 +203,7 @@
             
             // 1. Check for platform match
             if (link || copyData) {
-                let matchString = copyData ? '?copydata=' : link; // Use copydata if present
+                let matchString = copyData ? '?copydata=' : link; 
                 
                 for (const platform of PLATFORM_MAP) {
                     if (matchString.startsWith(platform.prefix) || link?.includes(platform.prefix)) {
@@ -212,16 +213,15 @@
                 }
             }
 
-            // 2. Clear old click listeners and attributes
+            // 2. Clear old click listeners
             actionButton.onclick = null;
-            actionButton.removeAttribute('href');
-            actionButton.removeAttribute('target');
             
             // 3. Apply action-specific logic
             actionButton.innerText = apply.name;
             
             if (apply.action === 'copy' && copyData) {
                 // Attach copy function
+                actionButton.setAttribute('href', '#'); // Prevent navigation for copy
                 actionButton.onclick = () => copyDataToClipboard(copyData, actionButton, copyFeedback);
             } else if (link) {
                 // Attach link attributes
@@ -229,7 +229,14 @@
                 // Only open new tab for HTTP links
                 if (!link.startsWith('tel:') && !link.startsWith('sms:') && !link.startsWith('mailto:')) {
                     actionButton.setAttribute('target', '_blank');
+                } else {
+                    actionButton.removeAttribute('target');
                 }
+            } else {
+                // If no link or copy data, ensure the button is neutralized
+                actionButton.setAttribute('href', '#');
+                actionButton.removeAttribute('target');
+                actionButton.innerText = 'No Action Defined';
             }
             
             // 4. Apply styling
